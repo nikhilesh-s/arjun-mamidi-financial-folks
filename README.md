@@ -1,122 +1,167 @@
-# Financial Folks - Kids Financial Literacy Platform
+# Materia MSE - Materials Science Community Platform
 
-A modern web application for teaching financial literacy to children through engaging content, activities, and community resources.
-
-## Quick Start
-
-### Prerequisites
-- Node.js 18.x or higher
-- npm 8.x or higher
-
-### Installation
-
-```bash
-npm install
-```
-
-### Development
-
-```bash
-npm run dev
-```
-
-Visit `http://localhost:3000`
-
-### Production Build
-
-```bash
-npm run build
-npm run start
-```
-
-## Deployment to Bolt.new
-
-### Important: Set Environment Variables
-
-Before deploying, configure these environment variables in Bolt.new dashboard:
-
-```
-NEXT_PUBLIC_SUPABASE_URL=https://ovfrkfddnifxnckrfcyj.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92ZnJrZmRkbmlmeG5ja3JmY3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzMjA5NDUsImV4cCI6MjA3ODg5Njk0NX0.KmOks97jywnXblX9tKHlWdllIx5vSNOoV8y9kcJue3Y
-RESEND_API_KEY=re_SR1Pg6vg_MCMTqhA1orqwhUJCxDYEARD9
-ADMIN_EMAIL=financialfolksblog@gmail.com
-```
-
-### Deploy
-
-1. Push code to your repository
-2. Set environment variables in Bolt.new
-3. Click "Deploy" or "Redeploy"
-4. Wait for build to complete
-5. Access your site at the Bolt URL
+A modern, full-featured materials science community platform built with Next.js, Supabase, and TypeScript.
 
 ## Features
 
-- Blog with admin panel for content management
-- Newsletter subscription system
-- Question submission and management
-- Resource library
-- Photo gallery
-- Community applications
-- Email notifications via Resend
-
-## Admin Panel
-
-Access the admin panel at `/#admin`
-
-Default password: `mangorocks!`
+- **Blog System**: Full-featured blog with categories, search, and comments
+- **Community Management**: Member applications and approval system
+- **Newsletter**: Email subscription and automated notifications
+- **Admin Dashboard**: Complete admin interface for content management
+- **Responsive Design**: Beautiful, mobile-first design with dark mode support
+- **Email Integration**: Automated emails for subscriptions and applications
 
 ## Tech Stack
 
-- Next.js 13.5.1
-- React 18
-- TypeScript
-- Tailwind CSS
-- Supabase (Database + Edge Functions)
-- Resend (Email)
+- **Frontend**: Next.js 13, TypeScript, Tailwind CSS
+- **Backend**: Supabase (PostgreSQL, Auth, Edge Functions)
+- **Email**: Resend API
+- **Deployment**: Netlify
+- **Icons**: Tabler Icons
 
-## Project Structure
+## Setup Instructions
 
+### 1. Supabase Setup
+
+1. Create a new project at [supabase.com](https://supabase.com)
+2. Go to Settings → API and copy your:
+   - Project URL
+   - Anon public key
+   - Service role key (for admin functions)
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+
+# Email Configuration (optional)
+RESEND_API_KEY=your_resend_api_key_here
+ADMIN_EMAIL=admin@yourdomain.com
 ```
-project/
-├── app/              # Next.js app router
-├── components/       # React components
-│   ├── pages/       # Page components
-│   └── ui/          # UI components
-├── lib/             # Utilities
-├── supabase/        # Supabase migrations & functions
-└── public/          # Static assets
+
+### 3. Database Setup
+
+The database schema will be automatically created when you first connect to Supabase. The migrations include:
+
+- **blog_posts**: Blog content management
+- **comments**: Blog post comments (with approval system)
+- **community_members**: Member applications and management
+- **newsletter_subscribers**: Email subscription management
+
+### 4. Email Setup (Optional)
+
+For email functionality:
+
+1. Sign up at [resend.com](https://resend.com)
+2. Get your API key
+3. Add it to your environment variables
+4. Configure your domain for sending emails
+
+### 5. Edge Functions
+
+The following Supabase Edge Functions are included:
+
+- **send-newsletter-confirmation**: Sends welcome emails to newsletter subscribers
+- **send-application-notification**: Sends confirmation emails for community applications
+- **send-newsletter-email**: Sends blog post notifications to subscribers
+
+These functions will work automatically once your Supabase project is set up.
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
 ```
 
-## Database Setup
+## Deployment
 
-See `DEPLOYMENT_GUIDE.md` for complete setup instructions including:
-- Running SQL migrations
-- Deploying edge functions
-- Configuring environment variables
+The project is configured for Netlify deployment with the included `netlify.toml` file.
 
-## Troubleshooting
+### Environment Variables for Production
 
-If you see a 404 error or Bolt preview doesn't work:
+Make sure to set these environment variables in your Netlify dashboard:
 
-1. Verify environment variables are set in Bolt
-2. Trigger a fresh deployment
-3. Check build logs for errors
-4. Clear browser cache
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RESEND_API_KEY` (optional)
+- `ADMIN_EMAIL` (optional)
 
-See `CHANGES_SUMMARY.md` for details on the latest fixes.
+## Usage
 
-## Documentation
+### Admin Access
 
-- `DEPLOYMENT_GUIDE.md` - Complete setup guide
-- `CHANGES_SUMMARY.md` - Recent fixes and updates
-- `BOLT_TROUBLESHOOTING.md` - Deployment troubleshooting
-- `BOLT_DEPLOYMENT_FIX.md` - Specific 404 fix guide
+Navigate to `/#admin` to access the admin dashboard. Here you can:
+
+- Manage blog posts (publish/unpublish)
+- Review and approve community member applications
+- View newsletter subscribers
+- Send newsletter emails when publishing posts
+
+### Content Management
+
+- Blog posts are managed through the admin dashboard
+- Comments require approval before appearing
+- Community applications go through an approval process
+- Newsletter subscriptions are automatic but can be managed
+
+### Fallback Behavior
+
+The application gracefully handles missing Supabase configuration:
+
+- Shows sample blog posts when database is not connected
+- Displays helpful setup instructions in admin panel
+- Continues to function for basic browsing without backend
+
+## Database Tables
+
+### blog_posts
+- Content management for blog articles
+- Supports drafts and published states
+- Includes featured images, categories, and SEO-friendly slugs
+
+### comments
+- User comments on blog posts
+- Approval system for moderation
+- Links to blog posts via slug
+
+### community_members
+- Member application system
+- Multiple member types (Explorer, Contributor, Builder, Connector)
+- Approval workflow for admins
+
+### newsletter_subscribers
+- Email subscription management
+- Active/inactive status tracking
+- Integration with email notifications
+
+## Security
+
+- Row Level Security (RLS) enabled on all tables
+- Public read access for published content
+- Admin functions require proper authentication
+- Email addresses are validated and sanitized
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
 
 ## License
 
-Private project
-
-## Contact
-
-For support, contact: financialfolksblog@gmail.com
+This project is licensed under the MIT License.
