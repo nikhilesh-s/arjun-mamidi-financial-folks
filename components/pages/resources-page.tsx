@@ -3,9 +3,7 @@ interface ResourcesPageProps {
 }
 
 export function ResourcesPage({ isActive }: ResourcesPageProps) {
-  const printableActivities = [
-    // Placeholder for activities - can be added later
-  ];
+  const printableActivities: any[] = [];
 
   return (
     <section id="page-resources" className={`page-section py-16 md:py-24 bg-[var(--bg-soft-light)] ${isActive ? 'active' : ''}`}>

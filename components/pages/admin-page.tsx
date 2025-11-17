@@ -33,6 +33,24 @@ interface NewsletterSubscriber {
   active: boolean;
 }
 
+interface Resource {
+  id: string;
+  title: string;
+  description: string;
+  link: string;
+  created_at: string;
+  updated_at: string;
+  display_order: number;
+}
+
+interface GalleryPhoto {
+  id: string;
+  photo_url: string;
+  caption: string;
+  created_at: string;
+  display_order: number;
+}
+
 interface AdminPageProps {
   isActive: boolean;
 }
@@ -42,6 +60,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [members, setMembers] = useState<CommunityMember[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
   const [sendingNewsletter, setSendingNewsletter] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'checking' | 'connected' | 'disconnected'>('checking');
@@ -60,6 +80,14 @@ export function AdminPage({ isActive }: AdminPageProps) {
     slug: ''
   });
   const [savingPost, setSavingPost] = useState(false);
+  const [showCreateResource, setShowCreateResource] = useState(false);
+  const [editingResource, setEditingResource] = useState<Resource | null>(null);
+  const [newResource, setNewResource] = useState({ title: '', description: '', link: '' });
+  const [savingResource, setSavingResource] = useState(false);
+  const [showCreatePhoto, setShowCreatePhoto] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<GalleryPhoto | null>(null);
+  const [newPhoto, setNewPhoto] = useState({ photo_url: '', caption: '' });
+  const [savingPhoto, setSavingPhoto] = useState(false);
 
   // Simple admin password - in production, use proper authentication
   const ADMIN_PASSWORD = 'mangorocks!';
@@ -68,7 +96,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
     if (!isSupabaseConfigured()) return;
 
     try {
-      const [postsResult, membersResult, subscribersResult] = await Promise.all([
+      const [postsResult, membersResult, subscribersResult, resourcesResult, galleryResult] = await Promise.all([
         safeSupabaseOperation(
           async () => {
             const res = await supabase!.from('blog_posts').select('*').order('created_at', { ascending: false });
@@ -89,12 +117,28 @@ export function AdminPage({ isActive }: AdminPageProps) {
             return res;
           },
           { data: [], error: null, count: null, status: 200, statusText: 'OK' }
+        ),
+        safeSupabaseOperation(
+          async () => {
+            const res = await supabase!.from('resources').select('*').order('display_order', { ascending: true });
+            return res;
+          },
+          { data: [], error: null, count: null, status: 200, statusText: 'OK' }
+        ),
+        safeSupabaseOperation(
+          async () => {
+            const res = await supabase!.from('gallery_photos').select('*').order('display_order', { ascending: true });
+            return res;
+          },
+          { data: [], error: null, count: null, status: 200, statusText: 'OK' }
         )
       ]);
 
       if (postsResult.data) setPosts(postsResult.data);
       if (membersResult.data) setMembers(membersResult.data);
       if (subscribersResult.data) setSubscribers(subscribersResult.data);
+      if (resourcesResult.data) setResources(resourcesResult.data);
+      if (galleryResult.data) setGalleryPhotos(galleryResult.data);
     } catch (error) {
       console.error('Error fetching data:', error);
     }
@@ -465,7 +509,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
     }
 
     if (!confirm('Are you sure you want to delete this member?')) return;
-    
+
     try {
       const result = await safeSupabaseOperation(
         async () => {
@@ -487,6 +531,218 @@ export function AdminPage({ isActive }: AdminPageProps) {
     } catch (error) {
       console.error('Error deleting member:', error);
       alert('Error deleting member');
+    }
+  };
+
+  const handleCreateResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured()) {
+      alert('Resource creation is not available at the moment.');
+      return;
+    }
+
+    setSavingResource(true);
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('resources')
+            .insert(newResource);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Resource created successfully!');
+        setNewResource({ title: '', description: '', link: '' });
+        setShowCreateResource(false);
+        fetchData();
+      } else {
+        alert('Error creating resource. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating resource:', error);
+      alert('Error creating resource. Please try again.');
+    } finally {
+      setSavingResource(false);
+    }
+  };
+
+  const handleUpdateResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured() || !editingResource) {
+      alert('Resource update is not available at the moment.');
+      return;
+    }
+
+    setSavingResource(true);
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('resources')
+            .update({ ...newResource, updated_at: new Date().toISOString() })
+            .eq('id', editingResource.id);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Resource updated successfully!');
+        setNewResource({ title: '', description: '', link: '' });
+        setEditingResource(null);
+        fetchData();
+      } else {
+        alert('Error updating resource. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating resource:', error);
+      alert('Error updating resource. Please try again.');
+    } finally {
+      setSavingResource(false);
+    }
+  };
+
+  const deleteResource = async (resourceId: string) => {
+    if (!isSupabaseConfigured()) {
+      alert('Admin functions are not available at the moment.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this resource?')) return;
+
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('resources')
+            .delete()
+            .eq('id', resourceId);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Resource deleted successfully!');
+        fetchData();
+      } else {
+        alert('Error deleting resource');
+      }
+    } catch (error) {
+      console.error('Error deleting resource:', error);
+      alert('Error deleting resource');
+    }
+  };
+
+  const handleCreatePhoto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured()) {
+      alert('Photo upload is not available at the moment.');
+      return;
+    }
+
+    setSavingPhoto(true);
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('gallery_photos')
+            .insert(newPhoto);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Photo added successfully!');
+        setNewPhoto({ photo_url: '', caption: '' });
+        setShowCreatePhoto(false);
+        fetchData();
+      } else {
+        alert('Error adding photo. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error adding photo:', error);
+      alert('Error adding photo. Please try again.');
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
+  const handleUpdatePhoto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isSupabaseConfigured() || !editingPhoto) {
+      alert('Photo update is not available at the moment.');
+      return;
+    }
+
+    setSavingPhoto(true);
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('gallery_photos')
+            .update(newPhoto)
+            .eq('id', editingPhoto.id);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Photo updated successfully!');
+        setNewPhoto({ photo_url: '', caption: '' });
+        setEditingPhoto(null);
+        fetchData();
+      } else {
+        alert('Error updating photo. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error updating photo:', error);
+      alert('Error updating photo. Please try again.');
+    } finally {
+      setSavingPhoto(false);
+    }
+  };
+
+  const deletePhoto = async (photoId: string) => {
+    if (!isSupabaseConfigured()) {
+      alert('Admin functions are not available at the moment.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this photo?')) return;
+
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('gallery_photos')
+            .delete()
+            .eq('id', photoId);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Photo deleted successfully!');
+        fetchData();
+      } else {
+        alert('Error deleting photo');
+      }
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      alert('Error deleting photo');
     }
   };
 
@@ -665,6 +921,26 @@ export function AdminPage({ isActive }: AdminPageProps) {
               }`}
             >
               Newsletter ({subscribers.filter(s => s.active).length} active)
+            </button>
+            <button
+              onClick={() => setActiveTab('resources')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === 'resources'
+                  ? 'bg-[var(--accent-primary)] text-white'
+                  : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
+              }`}
+            >
+              Resources ({resources.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('gallery')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === 'gallery'
+                  ? 'bg-[var(--accent-primary)] text-white'
+                  : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
+              }`}
+            >
+              Gallery ({galleryPhotos.length})
             </button>
           </div>
         </div>
@@ -980,7 +1256,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{subscriber.email}</td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              subscriber.active 
+                              subscriber.active
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300'
                                 : 'bg-gray-100 text-gray-800 dark:bg-gray-900/60 dark:text-gray-300'
                             }`}>
@@ -994,6 +1270,315 @@ export function AdminPage({ isActive }: AdminPageProps) {
                       ))}
                     </tbody>
                   </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'resources' && (
+              <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-[var(--border-light)] flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold">Resources Management</h2>
+                    <p className="text-sm text-secondary mt-1">Add and manage educational resources</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowCreateResource(true);
+                      setEditingResource(null);
+                      setNewResource({ title: '', description: '', link: '' });
+                    }}
+                    className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-4 py-2 rounded-full text-sm transition duration-300"
+                  >
+                    <i className="ti ti-plus mr-2"></i>
+                    Add Resource
+                  </button>
+                </div>
+
+                {(showCreateResource || editingResource) && (
+                  <div className="p-6 border-b border-[var(--border-light)] bg-[var(--bg-soft-light)]">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">
+                        {editingResource ? 'Edit Resource' : 'Add New Resource'}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setShowCreateResource(false);
+                          setEditingResource(null);
+                          setNewResource({ title: '', description: '', link: '' });
+                        }}
+                        className="text-[var(--text-secondary-light)] hover:text-[var(--text-primary-light)]"
+                      >
+                        <i className="ti ti-x text-xl"></i>
+                      </button>
+                    </div>
+
+                    <form onSubmit={editingResource ? handleUpdateResource : handleCreateResource} className="space-y-4">
+                      <div>
+                        <label className="form-label">Title *</label>
+                        <input
+                          type="text"
+                          required
+                          className="form-input"
+                          value={newResource.title}
+                          onChange={(e) => setNewResource({...newResource, title: e.target.value})}
+                          placeholder="Resource title"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label">Description *</label>
+                        <textarea
+                          required
+                          rows={4}
+                          className="form-textarea"
+                          value={newResource.description}
+                          onChange={(e) => setNewResource({...newResource, description: e.target.value})}
+                          placeholder="Detailed description of the resource"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label">Link (Google Doc or URL) *</label>
+                        <input
+                          type="url"
+                          required
+                          className="form-input"
+                          value={newResource.link}
+                          onChange={(e) => setNewResource({...newResource, link: e.target.value})}
+                          placeholder="https://docs.google.com/..."
+                        />
+                      </div>
+
+                      <div className="flex gap-3 pt-4 border-t border-[var(--border-light)]">
+                        <button
+                          type="submit"
+                          disabled={savingResource}
+                          className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition duration-300 disabled:opacity-50"
+                        >
+                          {savingResource ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              {editingResource ? 'Updating...' : 'Creating...'}
+                            </>
+                          ) : (
+                            <>
+                              <i className="ti ti-device-floppy mr-2"></i>
+                              {editingResource ? 'Update Resource' : 'Add Resource'}
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCreateResource(false);
+                            setEditingResource(null);
+                            setNewResource({ title: '', description: '', link: '' });
+                          }}
+                          className="px-6 py-2.5 border border-[var(--border-light)] text-[var(--text-primary-light)] rounded-lg hover:bg-[var(--bg-soft-light)] transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[var(--bg-soft-light)]">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Title</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Description</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Link</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-light)]">
+                      {resources.map((resource) => (
+                        <tr key={resource.id}>
+                          <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{resource.title}</td>
+                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                            {resource.description.substring(0, 100)}{resource.description.length > 100 ? '...' : ''}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <a href={resource.link} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-primary)] hover:underline">
+                              View Link
+                            </a>
+                          </td>
+                          <td className="px-6 py-4 text-sm space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingResource(resource);
+                                setNewResource({
+                                  title: resource.title,
+                                  description: resource.description,
+                                  link: resource.link
+                                });
+                              }}
+                              className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/60 dark:text-blue-300 rounded text-xs font-medium transition"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => deleteResource(resource.id)}
+                              className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/60 dark:text-red-300 rounded text-xs font-medium transition"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'gallery' && (
+              <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-[var(--border-light)] flex justify-between items-center">
+                  <div>
+                    <h2 className="text-xl font-semibold">Gallery Management</h2>
+                    <p className="text-sm text-secondary mt-1">Add and manage gallery photos</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowCreatePhoto(true);
+                      setEditingPhoto(null);
+                      setNewPhoto({ photo_url: '', caption: '' });
+                    }}
+                    className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-4 py-2 rounded-full text-sm transition duration-300"
+                  >
+                    <i className="ti ti-plus mr-2"></i>
+                    Add Photo
+                  </button>
+                </div>
+
+                {(showCreatePhoto || editingPhoto) && (
+                  <div className="p-6 border-b border-[var(--border-light)] bg-[var(--bg-soft-light)]">
+                    <div className="flex justify-between items-center mb-6">
+                      <h3 className="text-lg font-semibold">
+                        {editingPhoto ? 'Edit Photo' : 'Add New Photo'}
+                      </h3>
+                      <button
+                        onClick={() => {
+                          setShowCreatePhoto(false);
+                          setEditingPhoto(null);
+                          setNewPhoto({ photo_url: '', caption: '' });
+                        }}
+                        className="text-[var(--text-secondary-light)] hover:text-[var(--text-primary-light)]"
+                      >
+                        <i className="ti ti-x text-xl"></i>
+                      </button>
+                    </div>
+
+                    <form onSubmit={editingPhoto ? handleUpdatePhoto : handleCreatePhoto} className="space-y-4">
+                      <div>
+                        <label className="form-label">Photo URL (Imgur or other) *</label>
+                        <input
+                          type="url"
+                          required
+                          className="form-input"
+                          value={newPhoto.photo_url}
+                          onChange={(e) => setNewPhoto({...newPhoto, photo_url: e.target.value})}
+                          placeholder="https://i.imgur.com/..."
+                        />
+                      </div>
+
+                      <div>
+                        <label className="form-label">Caption</label>
+                        <textarea
+                          rows={3}
+                          className="form-textarea"
+                          value={newPhoto.caption}
+                          onChange={(e) => setNewPhoto({...newPhoto, caption: e.target.value})}
+                          placeholder="Optional caption for the photo"
+                        />
+                      </div>
+
+                      {newPhoto.photo_url && (
+                        <div className="mt-4">
+                          <label className="form-label">Preview</label>
+                          <img
+                            src={newPhoto.photo_url}
+                            alt="Preview"
+                            className="max-w-md rounded-lg shadow-md"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      <div className="flex gap-3 pt-4 border-t border-[var(--border-light)]">
+                        <button
+                          type="submit"
+                          disabled={savingPhoto}
+                          className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-6 py-2.5 rounded-full text-sm transition duration-300 disabled:opacity-50"
+                        >
+                          {savingPhoto ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              {editingPhoto ? 'Updating...' : 'Adding...'}
+                            </>
+                          ) : (
+                            <>
+                              <i className="ti ti-device-floppy mr-2"></i>
+                              {editingPhoto ? 'Update Photo' : 'Add Photo'}
+                            </>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowCreatePhoto(false);
+                            setEditingPhoto(null);
+                            setNewPhoto({ photo_url: '', caption: '' });
+                          }}
+                          className="px-6 py-2.5 border border-[var(--border-light)] text-[var(--text-primary-light)] rounded-lg hover:bg-[var(--bg-soft-light)] transition duration-300"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+                  {galleryPhotos.map((photo) => (
+                    <div key={photo.id} className="bg-[var(--bg-soft-light)] rounded-lg overflow-hidden shadow-md">
+                      <img
+                        src={photo.photo_url}
+                        alt={photo.caption}
+                        className="w-full h-48 object-cover"
+                      />
+                      <div className="p-4">
+                        <p className="text-sm text-[var(--text-secondary-light)] mb-3 min-h-[40px]">
+                          {photo.caption || 'No caption'}
+                        </p>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingPhoto(photo);
+                              setNewPhoto({
+                                photo_url: photo.photo_url,
+                                caption: photo.caption
+                              });
+                            }}
+                            className="flex-1 px-3 py-1.5 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/60 dark:text-blue-300 rounded text-xs font-medium transition"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => deletePhoto(photo.id)}
+                            className="flex-1 px-3 py-1.5 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/60 dark:text-red-300 rounded text-xs font-medium transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

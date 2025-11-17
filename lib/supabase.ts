@@ -220,6 +220,58 @@ export type Database = {
           active?: boolean;
         };
       };
+      resources: {
+        Row: {
+          id: string;
+          title: string;
+          description: string;
+          link: string;
+          created_at: string;
+          updated_at: string;
+          display_order: number;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description: string;
+          link: string;
+          created_at?: string;
+          updated_at?: string;
+          display_order?: number;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string;
+          link?: string;
+          created_at?: string;
+          updated_at?: string;
+          display_order?: number;
+        };
+      };
+      gallery_photos: {
+        Row: {
+          id: string;
+          photo_url: string;
+          caption: string;
+          created_at: string;
+          display_order: number;
+        };
+        Insert: {
+          id?: string;
+          photo_url: string;
+          caption?: string;
+          created_at?: string;
+          display_order?: number;
+        };
+        Update: {
+          id?: string;
+          photo_url?: string;
+          caption?: string;
+          created_at?: string;
+          display_order?: number;
+        };
+      };
     };
   };
 };
