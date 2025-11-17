@@ -10,13 +10,11 @@
   NPM_FLAGS = "--legacy-peer-deps"
 
 # Environment variables for production
-# Supabase credentials removed - set up new database connection
 [context.production.environment]
-  # NEXT_PUBLIC_SUPABASE_URL = ""
-  # NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
-  # RESEND_API_KEY = ""
-  # ADMIN_EMAIL = ""
-  # NEXT_PUBLIC_SITE_URL = ""
+  NEXT_PUBLIC_SUPABASE_URL = "https://ovfrkfddnifxnckrfcyj.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im92ZnJrZmRkbmlmeG5ja3JmY3lqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzMjA5NDUsImV4cCI6MjA3ODg5Njk0NX0.KmOks97jywnXblX9tKHlWdllIx5vSNOoV8y9kcJue3Y"
+  RESEND_API_KEY = "re_SR1Pg6vg_MCMTqhA1orqwhUJCxDYEARD9"
+  ADMIN_EMAIL = "financialfolksblog@gmail.com"
 
 # Headers for security and performance
 [[headers]]
