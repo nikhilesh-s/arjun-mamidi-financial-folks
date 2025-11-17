@@ -26,11 +26,15 @@ interface CommunityMember {
   created_at: string;
 }
 
-interface NewsletterSubscriber {
+interface ContactQuestion {
   id: string;
+  name: string;
   email: string;
-  subscribed_at: string;
-  active: boolean;
+  subject: string;
+  message: string;
+  created_at: string;
+  replied: boolean;
+  admin_notes: string;
 }
 
 interface Resource {
@@ -58,8 +62,7 @@ interface AdminPageProps {
 export function AdminPage({ isActive }: AdminPageProps) {
   const [activeTab, setActiveTab] = useState('posts');
   const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [members, setMembers] = useState<CommunityMember[]>([]);
-  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [questions, setQuestions] = useState<ContactQuestion[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -96,7 +99,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
     if (!isSupabaseConfigured()) return;
 
     try {
-      const [postsResult, membersResult, subscribersResult, resourcesResult, galleryResult] = await Promise.all([
+      const [postsResult, questionsResult, resourcesResult, galleryResult] = await Promise.all([
         safeSupabaseOperation(
           async () => {
             const res = await supabase!.from('blog_posts').select('*').order('created_at', { ascending: false });
@@ -106,14 +109,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
         ),
         safeSupabaseOperation(
           async () => {
-            const res = await supabase!.from('community_members').select('*').order('created_at', { ascending: false });
-            return res;
-          },
-          { data: [], error: null, count: null, status: 200, statusText: 'OK' }
-        ),
-        safeSupabaseOperation(
-          async () => {
-            const res = await supabase!.from('newsletter_subscribers').select('*').order('subscribed_at', { ascending: false });
+            const res = await supabase!.from('contact_questions').select('*').order('created_at', { ascending: false });
             return res;
           },
           { data: [], error: null, count: null, status: 200, statusText: 'OK' }
@@ -135,8 +131,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
       ]);
 
       if (postsResult.data) setPosts(postsResult.data);
-      if (membersResult.data) setMembers(membersResult.data);
-      if (subscribersResult.data) setSubscribers(subscribersResult.data);
+      if (questionsResult.data) setQuestions(questionsResult.data);
       if (resourcesResult.data) setResources(resourcesResult.data);
       if (galleryResult.data) setGalleryPhotos(galleryResult.data);
     } catch (error) {
@@ -261,7 +256,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
           excerpt: '',
           featured_image: '',
           category: 'Basics',
-          author: 'Nikhilesh Suravarjala',
+          author: 'Arjun Mamidi',
           slug: ''
         });
         setShowCreatePost(false);
@@ -329,7 +324,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
           excerpt: '',
           featured_image: '',
           category: 'Basics',
-          author: 'Nikhilesh Suravarjala',
+          author: 'Arjun Mamidi',
           slug: ''
         });
         setEditingPost(null);
@@ -382,14 +377,6 @@ export function AdminPage({ isActive }: AdminPageProps) {
         return;
       }
 
-      // If publishing a post, send newsletter emails
-      if (!currentStatus) {
-        const post = posts.find(p => p.id === postId);
-        if (post) {
-          await sendNewsletterEmails(post);
-        }
-      }
-
       fetchData();
     } catch (error) {
       console.error('Error updating post:', error);
@@ -432,91 +419,52 @@ export function AdminPage({ isActive }: AdminPageProps) {
     }
   };
 
-  const sendNewsletterEmails = async (post: BlogPost) => {
-    if (!isSupabaseConfigured()) return;
-
-    setSendingNewsletter(true);
-    try {
-      const activeSubscribers = subscribers.filter(sub => sub.active);
-      let successCount = 0;
-      
-      for (const subscriber of activeSubscribers) {
-        try {
-          const result = await safeSupabaseOperation(
-            async () => {
-              const { error } = await supabase!.functions.invoke('send-newsletter-email', {
-                body: {
-                  email: subscriber.email,
-                  blogTitle: post.title,
-                  blogSlug: post.slug
-                }
-              });
-              if (error) throw error;
-              return true;
-            },
-            false
-          );
-          
-          if (result) successCount++;
-        } catch (error) {
-          console.error(`Failed to send email to ${subscriber.email}:`, error);
-        }
-      }
-      
-      alert(`Newsletter sent to ${successCount} out of ${activeSubscribers.length} subscribers!`);
-    } catch (error) {
-      console.error('Error sending newsletter:', error);
-      alert('Error sending newsletter emails');
-    } finally {
-      setSendingNewsletter(false);
-    }
-  };
-
-  const approveMember = async (memberId: string) => {
+  const deleteQuestion = async (questionId: string) => {
     if (!isSupabaseConfigured()) {
       alert('Admin functions are not available at the moment.');
       return;
     }
 
-    try {
-      const result = await safeSupabaseOperation(
-        async () => {
-          const { error } = await supabase!
-            .from('community_members')
-            .update({ approved: true })
-            .eq('id', memberId);
-          if (error) throw error;
-          return true;
-        },
-        false
-      );
-
-      if (result) {
-        fetchData();
-      } else {
-        alert('Error approving member');
-      }
-    } catch (error) {
-      console.error('Error approving member:', error);
-      alert('Error approving member');
-    }
-  };
-
-  const deleteMember = async (memberId: string) => {
-    if (!isSupabaseConfigured()) {
-      alert('Admin functions are not available at the moment.');
-      return;
-    }
-
-    if (!confirm('Are you sure you want to delete this member?')) return;
+    if (!confirm('Are you sure you want to delete this question?')) return;
 
     try {
       const result = await safeSupabaseOperation(
         async () => {
           const { error } = await supabase!
-            .from('community_members')
+            .from('contact_questions')
             .delete()
-            .eq('id', memberId);
+            .eq('id', questionId);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (result) {
+        alert('Question deleted successfully!');
+        fetchData();
+      } else {
+        alert('Error deleting question');
+      }
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      alert('Error deleting question');
+    }
+  };
+
+  const toggleQuestionReplied = async (questionId: string, currentStatus: boolean) => {
+    if (!isSupabaseConfigured()) {
+      alert('Admin functions are not available at the moment.');
+      return;
+    }
+
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('contact_questions')
+            .update({ replied: !currentStatus })
+            .eq('id', questionId);
           if (error) throw error;
           return true;
         },
@@ -526,11 +474,11 @@ export function AdminPage({ isActive }: AdminPageProps) {
       if (result) {
         fetchData();
       } else {
-        alert('Error deleting member');
+        alert('Error updating question status');
       }
     } catch (error) {
-      console.error('Error deleting member:', error);
-      alert('Error deleting member');
+      console.error('Error updating question:', error);
+      alert('Error updating question status');
     }
   };
 
@@ -903,24 +851,14 @@ export function AdminPage({ isActive }: AdminPageProps) {
               Blog Posts ({posts.length})
             </button>
             <button
-              onClick={() => setActiveTab('members')}
+              onClick={() => setActiveTab('questions')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
-                activeTab === 'members'
+                activeTab === 'questions'
                   ? 'bg-[var(--accent-primary)] text-white'
                   : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
               }`}
             >
-              Members ({members.filter(m => !m.approved).length} pending)
-            </button>
-            <button
-              onClick={() => setActiveTab('subscribers')}
-              className={`px-4 py-2 rounded-lg font-medium transition ${
-                activeTab === 'subscribers'
-                  ? 'bg-[var(--accent-primary)] text-white'
-                  : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
-              }`}
-            >
-              Newsletter ({subscribers.filter(s => s.active).length} active)
+              Questions ({questions.length})
             </button>
             <button
               onClick={() => setActiveTab('resources')}
@@ -969,7 +907,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                         excerpt: '',
                         featured_image: '',
                         category: 'Basics',
-                        author: 'Nikhilesh Suravarjala',
+                        author: 'Arjun Mamidi',
                         slug: ''
                       });
                     }}
@@ -1175,96 +1113,61 @@ export function AdminPage({ isActive }: AdminPageProps) {
               </div>
             )}
 
-            {activeTab === 'members' && (
+            {activeTab === 'questions' && (
               <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
                 <div className="p-6 border-b border-[var(--border-light)]">
-                  <h2 className="text-xl font-semibold">Community Members</h2>
-                  <p className="text-sm text-secondary mt-1">Review and approve member applications</p>
+                  <h2 className="text-xl font-semibold">Questions</h2>
+                  <p className="text-sm text-secondary mt-1">View and manage questions from visitors</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead className="bg-[var(--bg-soft-light)]">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Name</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Type</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Subject</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Message</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Applied</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Submitted</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-light)]">
-                      {members.map((member) => (
-                        <tr key={member.id}>
-                          <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{member.full_name}</td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">{member.email}</td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)] capitalize">{member.member_type}</td>
+                      {questions.map((question) => (
+                        <tr key={question.id}>
+                          <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{question.name}</td>
+                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">{question.subject}</td>
+                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                            {question.message.substring(0, 100)}{question.message.length > 100 ? '...' : ''}
+                          </td>
                           <td className="px-6 py-4">
                             <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              member.approved 
+                              question.replied
                                 ? 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300'
                                 : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300'
                             }`}>
-                              {member.approved ? 'Approved' : 'Pending'}
+                              {question.replied ? 'Replied' : 'Pending'}
                             </span>
                           </td>
                           <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
-                            {new Date(member.created_at).toLocaleDateString()}
+                            {new Date(question.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 text-sm space-x-2">
-                            {!member.approved && (
-                              <button
-                                onClick={() => approveMember(member.id)}
-                                className="px-3 py-1 bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/60 dark:text-green-300 rounded text-xs font-medium transition"
-                              >
-                                Approve
-                              </button>
-                            )}
                             <button
-                              onClick={() => deleteMember(member.id)}
+                              onClick={() => toggleQuestionReplied(question.id, question.replied)}
+                              className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                question.replied
+                                  ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/60 dark:text-yellow-300'
+                                  : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/60 dark:text-green-300'
+                              }`}
+                            >
+                              {question.replied ? 'Mark Pending' : 'Mark Replied'}
+                            </button>
+                            <button
+                              onClick={() => deleteQuestion(question.id)}
                               className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/60 dark:text-red-300 rounded text-xs font-medium transition"
                             >
                               Delete
                             </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'subscribers' && (
-              <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
-                <div className="p-6 border-b border-[var(--border-light)]">
-                  <h2 className="text-xl font-semibold">Newsletter Subscribers</h2>
-                  <p className="text-sm text-secondary mt-1">View and manage newsletter subscriptions</p>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="bg-[var(--bg-soft-light)]">
-                      <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Email</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Status</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Subscribed</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[var(--border-light)]">
-                      {subscribers.map((subscriber) => (
-                        <tr key={subscriber.id}>
-                          <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{subscriber.email}</td>
-                          <td className="px-6 py-4">
-                            <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              subscriber.active
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300'
-                                : 'bg-gray-100 text-gray-800 dark:bg-gray-900/60 dark:text-gray-300'
-                            }`}>
-                              {subscriber.active ? 'Active' : 'Inactive'}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
-                            {new Date(subscriber.subscribed_at).toLocaleDateString()}
                           </td>
                         </tr>
                       ))}
