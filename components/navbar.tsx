@@ -25,7 +25,6 @@ export function NavBar() {
             <a href="#resources" className="nav-link page-link"><i className="ti ti-pencil"></i>Resources</a>
             <a href="#gallery" className="nav-link page-link"><i className="ti ti-camera"></i>Gallery</a>
             <a href="#about" className="nav-link page-link"><i className="ti ti-info-circle"></i>About</a>
-            <a href="#join" className="nav-link page-link"><i className="ti ti-help-circle"></i>Ask a Question</a>
           </div>
           <div className="flex items-center space-x-3">
             <a href="#join" className="page-link cta-button hidden sm:inline-flex items-center"> Ask a Question <i className="ti ti-arrow-right ml-1.5 text-sm"></i> </a>
@@ -51,7 +50,6 @@ export function NavBar() {
           <a href="#resources" className="mobile-nav-link page-link" onClick={closeMobileMenu}><i className="ti ti-pencil"></i>Resources</a>
           <a href="#gallery" className="mobile-nav-link page-link" onClick={closeMobileMenu}><i className="ti ti-camera"></i>Gallery</a>
           <a href="#about" className="mobile-nav-link page-link" onClick={closeMobileMenu}><i className="ti ti-info-circle"></i>About</a>
-          <a href="#join" className="mobile-nav-link page-link" onClick={closeMobileMenu}><i className="ti ti-help-circle"></i>Ask a Question</a>
           <div className="mt-6 pt-5 border-t border-[rgba(255,255,255,0.1)]">
             <a href="#join" className="page-link block w-full text-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white text-base font-semibold px-4 py-3 rounded-full shadow-sm transition" onClick={closeMobileMenu}>Ask a Question</a>
           </div>
