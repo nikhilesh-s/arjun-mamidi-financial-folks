@@ -5,14 +5,18 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-console.log('Supabase URL:', supabaseUrl);
-console.log('Supabase Key exists:', !!supabaseAnonKey);
-console.log('Environment check:', {
-  url: supabaseUrl,
-  keyLength: supabaseAnonKey?.length,
-  isValidUrl: supabaseUrl?.includes('supabase.co'),
-  isValidKey: supabaseAnonKey && supabaseAnonKey.length > 50
-});
+// Detailed diagnostics for debugging production issues
+if (typeof window !== 'undefined') {
+  console.log('=== Supabase Client Diagnostics ===');
+  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl || '(empty)');
+  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '(empty)');
+  console.log('URL Length:', supabaseUrl?.length || 0);
+  console.log('Key Length:', supabaseAnonKey?.length || 0);
+  console.log('Is Valid URL:', supabaseUrl?.includes('supabase.co'));
+  console.log('Is Valid Key:', supabaseAnonKey && supabaseAnonKey.length > 50);
+  console.log('All process.env keys:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
+  console.log('===================================');
+}
 
 // Only create client if we have valid credentials
 export const supabase = supabaseUrl && supabaseAnonKey && 
@@ -27,23 +31,36 @@ export const supabase = supabaseUrl && supabaseAnonKey &&
 
 // Helper function to check if Supabase is properly configured
 export const isSupabaseConfigured = () => {
-  const isConfigured = supabase !== null && 
-    supabaseUrl && 
+  const isConfigured = supabase !== null &&
+    supabaseUrl &&
     supabaseAnonKey &&
     supabaseUrl.includes('supabase.co') &&
     supabaseAnonKey.length > 50; // Basic validation
-  
-  console.log('Supabase configured:', isConfigured);
-  console.log('Configuration details:', {
-    hasSupabaseClient: !!supabase,
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseAnonKey,
-    urlValid: supabaseUrl?.includes('supabase.co'),
-    keyValid: supabaseAnonKey && supabaseAnonKey.length > 50
-  });
-  
+
+  if (typeof window !== 'undefined') {
+    console.log('Supabase configured:', isConfigured);
+    console.log('Configuration details:', {
+      hasSupabaseClient: !!supabase,
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseAnonKey,
+      urlValid: supabaseUrl?.includes('supabase.co'),
+      keyValid: supabaseAnonKey && supabaseAnonKey.length > 50,
+      urlValue: supabaseUrl || '(empty)',
+      keyPrefix: supabaseAnonKey ? supabaseAnonKey.substring(0, 20) + '...' : '(empty)'
+    });
+  }
+
   return isConfigured;
 };
+
+// Export diagnostic info for admin panel
+export const getSupabaseDiagnostics = () => ({
+  url: supabaseUrl || '(not set)',
+  urlLength: supabaseUrl?.length || 0,
+  keyLength: supabaseAnonKey?.length || 0,
+  hasClient: !!supabase,
+  isConfigured: isSupabaseConfigured()
+});
 
 // Helper function to safely execute Supabase operations
 export const safeSupabaseOperation = async <T>(

@@ -8,15 +8,16 @@
 [build.environment]
   NODE_OPTIONS = "--max-old-space-size=4096"
   NPM_FLAGS = "--legacy-peer-deps"
+  NEXT_PUBLIC_SUPABASE_URL = "https://nwlymffxblknjzlzwxla.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53bHltZmZ4Ymxrbmp6bHp3eGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNDc5ODQsImV4cCI6MjA3ODkyMzk4NH0.Yot9wKDTaZyqy9Rrl0yjLyEjblPft0KCvy290BYYjng"
 
 # Environment variables for production
-# Supabase credentials removed - set up new database connection
+# Configure these in Netlify/Bolt deployment settings
 [context.production.environment]
-  # NEXT_PUBLIC_SUPABASE_URL = ""
-  # NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
-  # RESEND_API_KEY = ""
-  # ADMIN_EMAIL = ""
-  # NEXT_PUBLIC_SITE_URL = ""
+  NEXT_PUBLIC_SUPABASE_URL = "https://nwlymffxblknjzlzwxla.supabase.co"
+  NEXT_PUBLIC_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im53bHltZmZ4Ymxrbmp6bHp3eGxhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMzNDc5ODQsImV4cCI6MjA3ODkyMzk4NH0.Yot9wKDTaZyqy9Rrl0yjLyEjblPft0KCvy290BYYjng"
+  RESEND_API_KEY = "re_SR1Pg6vg_MCMTqhA1orqwhUJCxDYEARD9"
+  NEXT_PUBLIC_SITE_URL = "https://financial-folks.bolt.host"
 
 # Headers for security and performance
 [[headers]]

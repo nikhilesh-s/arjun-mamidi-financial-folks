@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { supabase, isSupabaseConfigured, safeSupabaseOperation } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured, safeSupabaseOperation, getSupabaseDiagnostics } from '@/lib/supabase';
 import { SimpleBlogEditor } from '@/components/simple-blog-editor';
 
 interface BlogPost {
@@ -775,6 +775,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
   }
 
   if (connectionStatus === 'disconnected') {
+    const diagnostics = getSupabaseDiagnostics();
+
     return (
       <section id="page-admin" className="page-section active py-16 md:py-24 bg-[var(--bg-soft-light)]">
         <div className="content-container max-w-6xl mx-auto">
@@ -792,26 +794,59 @@ export function AdminPage({ isActive }: AdminPageProps) {
               <i className="ti ti-database-off text-4xl text-secondary opacity-30 mb-4"></i>
               <h2 className="text-xl font-semibold mb-2">Database Not Connected</h2>
               <p className="text-secondary mb-6">
-                To use admin functions, you need to connect to Supabase. The database appears to be properly configured but not responding.
+                Unable to connect to Supabase. Check the diagnostics below for details.
               </p>
               <div className="text-left max-w-2xl mx-auto space-y-4">
                 <div className="bg-[var(--bg-soft-light)] p-4 rounded-lg">
-                  <h3 className="font-semibold mb-2">✅ Configuration Status</h3>
-                  <p className="text-sm text-secondary">
-                    Environment variables are properly set. The issue may be temporary.
-                  </p>
+                  <h3 className="font-semibold mb-2">🔍 Environment Diagnostics</h3>
+                  <div className="text-sm text-secondary space-y-1 font-mono">
+                    <div className="flex justify-between">
+                      <span>Supabase URL:</span>
+                      <span className={diagnostics.url === '(not set)' ? 'text-red-600' : 'text-green-600'}>
+                        {diagnostics.url === '(not set)' ? '❌ Not Set' : `✅ ${diagnostics.url.substring(0, 30)}...`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>URL Length:</span>
+                      <span className={diagnostics.urlLength === 0 ? 'text-red-600' : 'text-green-600'}>
+                        {diagnostics.urlLength === 0 ? '❌ 0' : `✅ ${diagnostics.urlLength}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Anon Key Length:</span>
+                      <span className={diagnostics.keyLength === 0 ? 'text-red-600' : 'text-green-600'}>
+                        {diagnostics.keyLength === 0 ? '❌ 0' : `✅ ${diagnostics.keyLength}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Client Created:</span>
+                      <span className={diagnostics.hasClient ? 'text-green-600' : 'text-red-600'}>
+                        {diagnostics.hasClient ? '✅ Yes' : '❌ No'}
+                      </span>
+                    </div>
+                  </div>
                 </div>
                 <div className="bg-[var(--bg-soft-light)] p-4 rounded-lg">
                   <h3 className="font-semibold mb-2">🔄 Troubleshooting</h3>
                   <ul className="text-sm text-secondary space-y-1">
-                    <li>• Check your Supabase project status</li>
-                    <li>• Verify your API keys are correct</li>
-                    <li>• Ensure your database is running</li>
-                    <li>• Check for any service outages</li>
+                    {diagnostics.urlLength === 0 && (
+                      <li className="text-red-600">• <strong>Environment variables are missing!</strong> Configure NEXT_PUBLIC_SUPABASE_URL in deployment settings</li>
+                    )}
+                    {diagnostics.keyLength === 0 && (
+                      <li className="text-red-600">• <strong>API key is missing!</strong> Configure NEXT_PUBLIC_SUPABASE_ANON_KEY in deployment settings</li>
+                    )}
+                    {diagnostics.urlLength > 0 && diagnostics.keyLength > 0 && (
+                      <>
+                        <li>• Check your Supabase project status at supabase.com</li>
+                        <li>• Verify your API keys are correct</li>
+                        <li>• Ensure your database is running</li>
+                        <li>• Check browser console for detailed error messages</li>
+                      </>
+                    )}
                   </ul>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={checkConnection}
                 className="mt-6 inline-flex items-center justify-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-6 py-2.5 rounded-full shadow-md text-sm transition duration-300"
               >
