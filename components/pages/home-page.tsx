@@ -129,8 +129,8 @@ export function HomePage({ isActive }: HomePageProps) {
                 <a href="#resources" className="page-link hero-button-primary inline-flex items-center justify-center"> 
                   Check Out Resources <i className="ti ti-chevron-right ml-1.5 text-sm"></i> 
                 </a>
-                <a href="#" className="page-link hero-button-secondary inline-flex items-center justify-center" target="_blank" rel="noopener noreferrer"> 
-                  Take a look at my book <i className="ti ti-book ml-1.5"></i> 
+                <a href="https://www.amazon.com/If-Gave-You-100-Stocks/dp/B0FWH89XGB/ref=sr_1_1" className="page-link hero-button-secondary inline-flex items-center justify-center" target="_blank" rel="noopener noreferrer">
+                  Take a look at my book <i className="ti ti-book ml-1.5"></i>
                 </a>
               </div>
             </div>
