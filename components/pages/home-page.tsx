@@ -136,7 +136,11 @@ export function HomePage({ isActive }: HomePageProps) {
             </div>
             <div className="animate-fade-in delay-200">
               <div className="hero-image-container aspect-video relative overflow-hidden rounded-2xl shadow-lg bg-[var(--bg-soft-light)] border border-[var(--border-light)]">
-                {/* Placeholder box - image removed */}
+                <img
+                  src="https://i.imgur.com/TMthiBS.png"
+                  alt="Financial Folks - Teaching Kids About Money"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </div>
           </div>

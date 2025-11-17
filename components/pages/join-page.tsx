@@ -33,7 +33,7 @@ export function JoinPage({ isActive }: JoinPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!isSupabaseConfigured()) {
       alert('Question submissions are not available at the moment. Please try again later.');
       return;
@@ -43,22 +43,25 @@ export function JoinPage({ isActive }: JoinPageProps) {
 
     try {
       const formData = new FormData(e.target as HTMLFormElement);
-      
-      const questionData = {
-        full_name: formData.get('full_name') as string || null,
-        member_type: formData.get('member_type') as string,
-        question: formData.get('question') as string,
-        approved: false
+
+      const name = formData.get('full_name') as string || 'Anonymous';
+      const memberType = formData.get('member_type') as string;
+      const message = formData.get('question') as string;
+
+      const contactData = {
+        name: name,
+        email: 'noreply@financialfolks.com',
+        subject: `Question from ${memberType}`,
+        message: message,
       };
 
-      console.log('Submitting question:', questionData);
+      console.log('Submitting question:', contactData);
 
-      // Insert question data
       const insertResult = await safeSupabaseOperation(
         async () => {
           const { error } = await supabase!
-            .from('community_members')
-            .insert(questionData)
+            .from('contact_questions')
+            .insert(contactData)
             .then(res => res);
           if (error) throw error;
           return true;
@@ -72,37 +75,32 @@ export function JoinPage({ isActive }: JoinPageProps) {
 
       console.log('Successfully added to database, now sending notification email...');
 
-      // Send notification email
       try {
-        console.log('Invoking send-application-notification function...');
+        console.log('Invoking send-contact-question function...');
         const emailResult = await safeSupabaseOperation(
           async () => {
-            const { data, error } = await supabase!.functions.invoke('send-application-notification', {
-              body: questionData
+            const { data, error } = await supabase!.functions.invoke('send-contact-question', {
+              body: contactData
             }).then(res => res);
             return { data, error };
           },
           { data: null, error: new Error('Email service not available') }
         );
-        
+
         console.log('Email function response:', emailResult);
-        
+
         if (emailResult.error) {
           console.error('Failed to send notification email:', emailResult.error);
-          // Don't fail the whole process if email fails
         }
       } catch (emailError) {
         console.error('Email service error:', emailError);
-        // Continue even if email fails
       }
 
       alert('Question submitted successfully! I\'ll answer it soon.');
-      
-      // Reset form
+
       if (formRef.current) {
         formRef.current.reset();
         setSelectedMemberType('');
-        // Clear selected member type option
         const memberOptions = formRef.current.querySelectorAll('.member-type-option');
         memberOptions.forEach(opt => opt.classList.remove('selected'));
       }

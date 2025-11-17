@@ -272,6 +272,38 @@ export type Database = {
           display_order?: number;
         };
       };
+      contact_questions: {
+        Row: {
+          id: string;
+          name: string;
+          email: string;
+          subject: string;
+          message: string;
+          created_at: string;
+          replied: boolean;
+          admin_notes: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          email: string;
+          subject?: string;
+          message: string;
+          created_at?: string;
+          replied?: boolean;
+          admin_notes?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          email?: string;
+          subject?: string;
+          message?: string;
+          created_at?: string;
+          replied?: boolean;
+          admin_notes?: string;
+        };
+      };
     };
   };
 };
