@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { supabase, isSupabaseConfigured, safeSupabaseOperation } from '@/lib/supabase';
+import { BOOK_URL } from '@/lib/constants';
 
 interface HomePageProps {
   isActive: boolean;
@@ -129,7 +130,7 @@ export function HomePage({ isActive }: HomePageProps) {
                 <a href="#resources" className="page-link hero-button-primary inline-flex items-center justify-center"> 
                   Check Out Resources <i className="ti ti-chevron-right ml-1.5 text-sm"></i> 
                 </a>
-                <a href="https://www.amazon.com/If-Gave-You-100-Stocks/dp/B0FWH89XGB/ref=sr_1_1" className="page-link hero-button-secondary inline-flex items-center justify-center" target="_blank" rel="noopener noreferrer">
+                <a href={BOOK_URL} className="page-link hero-button-secondary inline-flex items-center justify-center" target="_blank" rel="noopener noreferrer">
                   Take a look at my book <i className="ti ti-book ml-1.5"></i>
                 </a>
               </div>
@@ -198,7 +199,7 @@ export function HomePage({ isActive }: HomePageProps) {
               </a>
             </div>
             <div>
-              <h4 className="font-semibold mb-2">What you&apos;ll get:</h4>
+              <h4 className="font-semibold mb-2">What You&apos;ll Get:</h4>
               <ul className="text-sm text-secondary space-y-2">
                 <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-yellow)] mr-2 mt-1.5 flex-shrink-0"></span>Access to weekly finance blogs and activities</li>
                 <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-secondary)] mr-2 mt-1.5 flex-shrink-0"></span>Connect with other parents and educators</li>

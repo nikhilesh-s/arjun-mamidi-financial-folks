@@ -106,7 +106,7 @@ export function BlogPage({ isActive }: BlogPageProps) {
   return (
     <section id="page-blog" className={`page-section py-16 md:py-24 bg-[var(--bg-soft-light)] ${isActive ? 'active' : ''}`}>
       <div className="content-container">
-        <h1 className="page-title text-[var(--text-heading-light)] text-center">Weekly finance fun</h1>
+        <h1 className="page-title text-[var(--text-heading-light)] text-center">Weekly Finance Fun</h1>
         <p className="text-lg text-secondary text-center max-w-3xl mx-auto mb-10"> 
           Each week we post a new blog to teach kids about money in fun and simple ways. Topics include saving, budgeting, investing, and smart spending habits. Check back weekly for new lessons.
         </p>

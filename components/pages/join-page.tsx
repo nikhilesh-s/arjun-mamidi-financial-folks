@@ -120,7 +120,7 @@ export function JoinPage({ isActive }: JoinPageProps) {
 
         <form onSubmit={handleSubmit} className="space-y-10" ref={formRef}>
           <div className="form-section">
-            <h2 className="form-section-title">Who are you?</h2>
+            <h2 className="form-section-title">Who Are You?</h2>
             <div id="member-type-selector" className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="member-type-option" data-value="student">
                 <h5><i className="ti ti-school mr-1"></i> Student</h5>

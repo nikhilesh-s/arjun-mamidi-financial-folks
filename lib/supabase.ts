@@ -1,91 +1,41 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Use environment variables with fallbacks for build time
-// Supabase disconnected - set these to empty/null to disable connection
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.trim();
 
-// Detailed diagnostics for debugging production issues
-if (typeof window !== 'undefined') {
-  console.log('=== Supabase Client Diagnostics ===');
-  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl || '(empty)');
-  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : '(empty)');
-  console.log('URL Length:', supabaseUrl?.length || 0);
-  console.log('Key Length:', supabaseAnonKey?.length || 0);
-  console.log('Is Valid URL:', supabaseUrl?.includes('supabase.co'));
-  console.log('Is Valid Key:', supabaseAnonKey && supabaseAnonKey.length > 50);
-  console.log('All process.env keys:', Object.keys(process.env).filter(k => k.includes('SUPABASE')));
-  console.log('===================================');
-}
+const hasValidCredentials =
+  Boolean(supabaseUrl && supabaseUrl.includes('supabase.co')) &&
+  Boolean(supabaseAnonKey && supabaseAnonKey.length > 50);
 
-// Only create client if we have valid credentials
-export const supabase = supabaseUrl && supabaseAnonKey && 
-  supabaseUrl !== 'your_supabase_url_here' && 
-  supabaseAnonKey !== 'your_supabase_anon_key_here'
-  ? createClient(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: false // Disable auth for public access
-      }
+export const supabase = hasValidCredentials
+  ? createClient(supabaseUrl!, supabaseAnonKey!, {
+      auth: { persistSession: false }
     })
   : null;
 
-// Helper function to check if Supabase is properly configured
-export const isSupabaseConfigured = () => {
-  const isConfigured = supabase !== null &&
-    supabaseUrl &&
-    supabaseAnonKey &&
-    supabaseUrl.includes('supabase.co') &&
-    supabaseAnonKey.length > 50; // Basic validation
+export const isSupabaseConfigured = () => !!supabase;
 
-  if (typeof window !== 'undefined') {
-    console.log('Supabase configured:', isConfigured);
-    console.log('Configuration details:', {
-      hasSupabaseClient: !!supabase,
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseAnonKey,
-      urlValid: supabaseUrl?.includes('supabase.co'),
-      keyValid: supabaseAnonKey && supabaseAnonKey.length > 50,
-      urlValue: supabaseUrl || '(empty)',
-      keyPrefix: supabaseAnonKey ? supabaseAnonKey.substring(0, 20) + '...' : '(empty)'
-    });
-  }
-
-  return isConfigured;
-};
-
-// Export diagnostic info for admin panel
 export const getSupabaseDiagnostics = () => ({
   url: supabaseUrl || '(not set)',
   urlLength: supabaseUrl?.length || 0,
   keyLength: supabaseAnonKey?.length || 0,
   hasClient: !!supabase,
-  isConfigured: isSupabaseConfigured()
+  isConfigured: !!supabase
 });
 
-// Helper function to safely execute Supabase operations
 export const safeSupabaseOperation = async <T>(
   operation: () => Promise<T>,
   fallback: T
 ): Promise<T> => {
-  if (!supabase || !isSupabaseConfigured()) {
-    console.warn('Supabase not configured properly, using fallback');
+  if (!supabase) {
     return fallback;
   }
-  
+
   try {
-    const result = await operation();
-    console.log('Supabase operation successful');
-    return result;
+    return await operation();
   } catch (error: any) {
-    // Don't log PGRST116 errors as they're expected when no rows are found
     if (error?.code !== 'PGRST116') {
       console.error('Supabase operation failed:', error);
-      console.error('Error details:', {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
     }
     return fallback;
   }
