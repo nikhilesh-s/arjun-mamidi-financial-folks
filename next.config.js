@@ -2,9 +2,6 @@ const path = require('path');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  httpAgentOptions: {
-    timeout: 120000,
-  },
   images: {
     domains: [
       'images.pexels.com',
