@@ -1368,6 +1368,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                     <thead className="bg-[var(--bg-soft-light)]">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Email</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Subject</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Message</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Status</th>
@@ -1379,6 +1380,14 @@ export function AdminPage({ isActive }: AdminPageProps) {
                       {questions.map((question) => (
                         <tr key={question.id}>
                           <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{question.name}</td>
+                          <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                            <a
+                              href={`mailto:${question.email}?subject=${encodeURIComponent(`Re: ${question.subject || 'Your Financial Folks question'}`)}`}
+                              className="page-link text-[var(--accent-primary)] hover:text-[var(--accent-primary-lighter)]"
+                            >
+                              {question.email}
+                            </a>
+                          </td>
                           <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">{question.subject}</td>
                           <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
                             {question.message.substring(0, 100)}{question.message.length > 100 ? '...' : ''}
@@ -1396,6 +1405,12 @@ export function AdminPage({ isActive }: AdminPageProps) {
                             {new Date(question.created_at).toLocaleDateString()}
                           </td>
                           <td className="px-6 py-4 text-sm space-x-2">
+                            <a
+                              href={`mailto:${question.email}?subject=${encodeURIComponent(`Re: ${question.subject || 'Your Financial Folks question'}`)}`}
+                              className="inline-flex px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/60 dark:text-blue-300 rounded text-xs font-medium transition"
+                            >
+                              Email
+                            </a>
                             <button
                               onClick={() => toggleQuestionReplied(question.id, question.replied)}
                               className={`px-3 py-1 rounded text-xs font-medium transition ${

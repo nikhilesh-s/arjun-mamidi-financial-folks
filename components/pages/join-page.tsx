@@ -45,12 +45,13 @@ export function JoinPage({ isActive }: JoinPageProps) {
       const formData = new FormData(e.target as HTMLFormElement);
 
       const name = formData.get('full_name') as string || 'Anonymous';
+      const email = formData.get('email') as string;
       const memberType = formData.get('member_type') as string;
       const message = formData.get('question') as string;
 
       const contactData = {
         name: name,
-        email: 'noreply@financialfolks.com',
+        email,
         subject: `Question from ${memberType}`,
         message: message,
       };
@@ -144,6 +145,17 @@ export function JoinPage({ isActive }: JoinPageProps) {
           <div className="form-section">
             <h2 className="form-section-title">Your Question</h2>
             <div>
+              <label htmlFor="email" className="form-label">Email *</label>
+              <input
+                type="email"
+                name="email"
+                id="email"
+                required
+                className="form-input"
+                placeholder="your@email.com"
+              />
+            </div>
+            <div className="mt-6">
               <label htmlFor="full_name" className="form-label">Name (Optional)</label>
               <input type="text" name="full_name" id="full_name" className="form-input" placeholder="Your name (optional)" />
             </div>
