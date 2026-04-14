@@ -33,12 +33,12 @@ export function NavBar() {
                 id="mobile-menu-button" 
                 aria-expanded={mobileMenuOpen ? 'true' : 'false'} 
                 aria-controls="mobile-menu" 
-                className="p-2 rounded-lg text-white/85 hover:bg-white/10 focus:outline-none"
+                className="rounded-lg p-2 text-white hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/40 focus:ring-offset-0"
                 onClick={toggleMobileMenu}
               >
                 <span className="sr-only">Open main menu</span>
-                <i id="mobile-menu-icon-open" className={`ti ti-menu-2 text-2xl ${mobileMenuOpen ? 'hidden' : 'block'}`}></i> 
-                <i id="mobile-menu-icon-close" className={`ti ti-x text-2xl ${mobileMenuOpen ? 'block' : 'hidden'}`}></i>
+                <i id="mobile-menu-icon-open" className={`ti ti-menu-2 text-2xl drop-shadow-sm ${mobileMenuOpen ? 'hidden' : 'block'}`}></i> 
+                <i id="mobile-menu-icon-close" className={`ti ti-x text-2xl drop-shadow-sm ${mobileMenuOpen ? 'block' : 'hidden'}`}></i>
               </button>
             </div>
           </div>

@@ -175,9 +175,12 @@ export function BlogPage({ isActive }: BlogPageProps) {
                       <i className="ti ti-calendar-event mr-1 opacity-70"></i>
                       {new Date(post.created_at).toLocaleDateString()}
                     </span>
-                    <span className="inline-flex items-center hover:text-[var(--accent-primary)] transition">
+                    <a
+                      href={`#blog-post-${post.slug}`}
+                      className="page-link inline-flex items-center hover:text-[var(--accent-primary)] transition"
+                    >
                       Read <i className="ti ti-arrow-right ml-1 text-sm"></i>
-                    </span>
+                    </a>
                   </div>
                 </div>
               </article>
