@@ -15,6 +15,31 @@ interface ContentBlock {
 }
 
 export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEditorProps) {
+  const convertHtmlToEditableText = (html: string) => {
+    return html
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<(strong|b)>(.*?)<\/\1>/gi, '**$2**')
+      .replace(/<(em|i)>(.*?)<\/\1>/gi, '*$2*')
+      .replace(/<[^>]*>/g, '');
+  };
+
+  const escapeHtml = (text: string) => {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  };
+
+  const formatInlineText = (text: string) => {
+    const escapedText = escapeHtml(text);
+
+    return escapedText
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>');
+  };
+
   const [blocks, setBlocks] = useState<ContentBlock[]>(() => {
     if (value && value.trim()) {
       // Parse existing HTML content into blocks
@@ -32,7 +57,7 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
             parsedBlocks.push({
               id: `parsed-${index}`,
               type: 'heading',
-              content: element.textContent || ''
+              content: convertHtmlToEditableText(element.innerHTML)
             });
           } else if (tagName === 'img') {
             parsedBlocks.push({
@@ -41,10 +66,7 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
               content: (element as HTMLImageElement).src || ''
             });
           } else if (tagName === 'p') {
-            // Convert <br> tags back to newlines for editing
-            const content = element.innerHTML.replace(/<br\s*\/?>/gi, '\n');
-            // Remove any remaining HTML tags
-            const textContent = content.replace(/<[^>]*>/g, '');
+            const textContent = convertHtmlToEditableText(element.innerHTML);
             if (textContent.trim()) {
               parsedBlocks.push({
                 id: `parsed-${index}`,
@@ -68,7 +90,7 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
     const html = newBlocks.map(block => {
       switch (block.type) {
         case 'heading':
-          return `<h2 style="font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-heading-light);">${block.content}</h2>`;
+          return `<h2 style="font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 0.75rem 0; color: var(--text-heading-light);">${formatInlineText(block.content)}</h2>`;
         case 'image':
           if (block.content && block.content.trim()) {
             return `<img src="${block.content}" style="max-width: 100%; height: auto; margin: 1rem 0; border-radius: 8px;" />`;
@@ -77,7 +99,7 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
         case 'text':
         default:
           if (block.content && block.content.trim()) {
-            return `<p style="margin-bottom: 1rem; line-height: 1.7;">${block.content.replace(/\n/g, '<br>')}</p>`;
+            return `<p style="margin-bottom: 1rem; line-height: 1.7;">${formatInlineText(block.content).replace(/\n/g, '<br>')}</p>`;
           }
           return '';
       }
@@ -102,6 +124,32 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
       block.id === id ? { ...block, content } : block
     );
     updateContent(newBlocks);
+  };
+
+  const wrapSelectedText = (id: string, wrapper: '**' | '*') => {
+    const textarea = document.getElementById(`editor-block-${id}`) as HTMLTextAreaElement | null;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.slice(start, end);
+
+    if (!selectedText) {
+      textarea.focus();
+      return;
+    }
+
+    const wrappedText = `${wrapper}${selectedText}${wrapper}`;
+    const updatedValue = `${textarea.value.slice(0, start)}${wrappedText}${textarea.value.slice(end)}`;
+
+    updateBlock(id, updatedValue);
+
+    requestAnimationFrame(() => {
+      const updatedTextarea = document.getElementById(`editor-block-${id}`) as HTMLTextAreaElement | null;
+      if (!updatedTextarea) return;
+      updatedTextarea.focus();
+      updatedTextarea.setSelectionRange(start, start + wrappedText.length);
+    });
   };
 
   const removeBlock = (id: string) => {
@@ -232,17 +280,39 @@ export function SimpleBlogEditor({ value, onChange, placeholder }: SimpleBlogEdi
                   )}
                 </div>
               ) : (
-                <textarea
-                  className="form-textarea w-full"
-                  rows={block.type === 'heading' ? 2 : 4}
-                  value={block.content}
-                  onChange={(e) => updateBlock(block.id, e.target.value)}
-                  placeholder={
-                    block.type === 'heading' 
-                      ? 'Enter your heading text...' 
-                      : 'Enter your paragraph text...'
-                  }
-                />
+                <div className="space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => wrapSelectedText(block.id, '**')}
+                      className="inline-flex items-center rounded-md border border-[var(--border-light)] bg-white px-3 py-1.5 text-xs font-medium text-[var(--text-primary-light)] transition hover:bg-[var(--bg-soft-light)]"
+                    >
+                      Bold
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => wrapSelectedText(block.id, '*')}
+                      className="inline-flex items-center rounded-md border border-[var(--border-light)] bg-white px-3 py-1.5 text-xs italic text-[var(--text-primary-light)] transition hover:bg-[var(--bg-soft-light)]"
+                    >
+                      Italic
+                    </button>
+                    <span className="text-xs text-[var(--text-secondary-light)]">
+                      Select text, then click Bold or Italic.
+                    </span>
+                  </div>
+                  <textarea
+                    id={`editor-block-${block.id}`}
+                    className="form-textarea w-full"
+                    rows={block.type === 'heading' ? 2 : 4}
+                    value={block.content}
+                    onChange={(e) => updateBlock(block.id, e.target.value)}
+                    placeholder={
+                      block.type === 'heading' 
+                        ? 'Enter your heading text...' 
+                        : (placeholder || 'Enter your paragraph text...')
+                    }
+                  />
+                </div>
               )}
             </div>
           </div>

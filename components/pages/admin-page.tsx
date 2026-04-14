@@ -17,6 +17,16 @@ interface BlogPost {
   featured_image?: string;
 }
 
+interface Comment {
+  id: string;
+  post_id: string;
+  author_name: string;
+  author_email: string;
+  content: string;
+  approved: boolean;
+  created_at: string;
+}
+
 interface CommunityMember {
   id: string;
   full_name: string;
@@ -62,6 +72,7 @@ interface AdminPageProps {
 export function AdminPage({ isActive }: AdminPageProps) {
   const [activeTab, setActiveTab] = useState('posts');
   const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [comments, setComments] = useState<Comment[]>([]);
   const [questions, setQuestions] = useState<ContactQuestion[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>([]);
@@ -80,7 +91,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
     featured_image: '',
     category: '',
     author: 'Arjun Mamidi',
-    slug: ''
+    slug: '',
+    created_at: new Date().toISOString().split('T')[0]
   });
   const [savingPost, setSavingPost] = useState(false);
   const [showCreateResource, setShowCreateResource] = useState(false);
@@ -99,10 +111,17 @@ export function AdminPage({ isActive }: AdminPageProps) {
     if (!isSupabaseConfigured()) return;
 
     try {
-      const [postsResult, questionsResult, resourcesResult, galleryResult] = await Promise.all([
+      const [postsResult, commentsResult, questionsResult, resourcesResult, galleryResult] = await Promise.all([
         safeSupabaseOperation(
           async () => {
             const res = await supabase!.from('blog_posts').select('*').order('created_at', { ascending: false });
+            return res;
+          },
+          { data: [], error: null, count: null, status: 200, statusText: 'OK' }
+        ),
+        safeSupabaseOperation(
+          async () => {
+            const res = await supabase!.from('comments').select('*').order('created_at', { ascending: false });
             return res;
           },
           { data: [], error: null, count: null, status: 200, statusText: 'OK' }
@@ -131,6 +150,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
       ]);
 
       if (postsResult.data) setPosts(postsResult.data);
+      if (commentsResult.data) setComments(commentsResult.data);
       if (questionsResult.data) setQuestions(questionsResult.data);
       if (resourcesResult.data) setResources(resourcesResult.data);
       if (galleryResult.data) setGalleryPhotos(galleryResult.data);
@@ -218,6 +238,26 @@ export function AdminPage({ isActive }: AdminPageProps) {
       .trim();
   };
 
+  const formatDateForInput = (dateString?: string) => {
+    if (!dateString) return new Date().toISOString().split('T')[0];
+
+    const date = new Date(dateString);
+    if (Number.isNaN(date.getTime())) {
+      return new Date().toISOString().split('T')[0];
+    }
+
+    const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return localDate.toISOString().split('T')[0];
+  };
+
+  const getPostTimestamp = (dateInput: string) => {
+    if (!dateInput) {
+      return new Date().toISOString();
+    }
+
+    return new Date(`${dateInput}T12:00:00`).toISOString();
+  };
+
   const handleCreatePost = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -234,7 +274,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
       const postData = {
         ...newPost,
         slug,
-        published: false // Always create as draft initially
+        published: false, // Always create as draft initially
+        created_at: getPostTimestamp(newPost.created_at)
       };
 
       const result = await safeSupabaseOperation(
@@ -257,7 +298,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
           featured_image: '',
           category: 'Basics',
           author: 'Arjun Mamidi',
-          slug: ''
+          slug: '',
+          created_at: new Date().toISOString().split('T')[0]
         });
         setShowCreatePost(false);
         fetchData();
@@ -281,7 +323,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
       featured_image: post.featured_image || '',
       category: post.category,
       author: post.author,
-      slug: post.slug
+      slug: post.slug,
+      created_at: formatDateForInput(post.created_at)
     });
   };
 
@@ -301,6 +344,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
       const postData = {
         ...newPost,
         slug,
+        created_at: getPostTimestamp(newPost.created_at),
         updated_at: new Date().toISOString()
       };
 
@@ -325,7 +369,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
           featured_image: '',
           category: 'Basics',
           author: 'Arjun Mamidi',
-          slug: ''
+          slug: '',
+          created_at: new Date().toISOString().split('T')[0]
         });
         setEditingPost(null);
         fetchData();
@@ -349,8 +394,73 @@ export function AdminPage({ isActive }: AdminPageProps) {
       featured_image: '',
       category: 'Basics',
       author: 'Nikhilesh Suravarjala',
-      slug: ''
+      slug: '',
+      created_at: new Date().toISOString().split('T')[0]
     });
+  };
+
+  const toggleCommentApproved = async (commentId: string, currentStatus: boolean) => {
+    if (!isSupabaseConfigured()) {
+      alert('Comment moderation is not available at the moment.');
+      return;
+    }
+
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('comments')
+            .update({ approved: !currentStatus })
+            .eq('id', commentId);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (!result) {
+        alert('Error updating comment status');
+        return;
+      }
+
+      fetchData();
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      alert('Error updating comment status');
+    }
+  };
+
+  const deleteComment = async (commentId: string) => {
+    if (!isSupabaseConfigured()) {
+      alert('Comment moderation is not available at the moment.');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      const result = await safeSupabaseOperation(
+        async () => {
+          const { error } = await supabase!
+            .from('comments')
+            .delete()
+            .eq('id', commentId);
+          if (error) throw error;
+          return true;
+        },
+        false
+      );
+
+      if (!result) {
+        alert('Error deleting comment');
+        return;
+      }
+
+      fetchData();
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      alert('Error deleting comment');
+    }
   };
 
   const togglePostPublished = async (postId: string, currentStatus: boolean) => {
@@ -886,6 +996,16 @@ export function AdminPage({ isActive }: AdminPageProps) {
               Blog Posts ({posts.length})
             </button>
             <button
+              onClick={() => setActiveTab('comments')}
+              className={`px-4 py-2 rounded-lg font-medium transition ${
+                activeTab === 'comments'
+                  ? 'bg-[var(--accent-primary)] text-white'
+                  : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
+              }`}
+            >
+              Comments ({comments.length})
+            </button>
+            <button
               onClick={() => setActiveTab('questions')}
               className={`px-4 py-2 rounded-lg font-medium transition ${
                 activeTab === 'questions'
@@ -943,7 +1063,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
                         featured_image: '',
                         category: 'Basics',
                         author: 'Arjun Mamidi',
-                        slug: ''
+                        slug: '',
+                        created_at: new Date().toISOString().split('T')[0]
                       });
                     }}
                     className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-4 py-2 rounded-full text-sm transition duration-300"
@@ -1037,6 +1158,18 @@ export function AdminPage({ isActive }: AdminPageProps) {
                             onChange={(e) => setNewPost({...newPost, author: e.target.value})}
                           />
                         </div>
+                        <div>
+                          <label className="form-label">Post Date</label>
+                          <input
+                            type="date"
+                            className="form-input"
+                            value={newPost.created_at}
+                            onChange={(e) => setNewPost({...newPost, created_at: e.target.value})}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <label className="form-label">Custom Slug (optional)</label>
                           <input
@@ -1142,6 +1275,79 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           </td>
                         </tr>
                       ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'comments' && (
+              <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
+                <div className="p-6 border-b border-[var(--border-light)]">
+                  <h2 className="text-xl font-semibold">Comments</h2>
+                  <p className="text-sm text-secondary mt-1">Approve, unapprove, or delete blog comments</p>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="bg-[var(--bg-soft-light)]">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Name</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Post</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Comment</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Status</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Submitted</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[var(--border-light)]">
+                      {comments.map((comment) => {
+                        const relatedPost = posts.find((post) => post.slug === comment.post_id);
+
+                        return (
+                          <tr key={comment.id}>
+                            <td className="px-6 py-4">
+                              <div className="text-sm font-medium text-[var(--text-heading-light)]">{comment.author_name}</div>
+                              <div className="text-sm text-[var(--text-secondary-light)]">{comment.author_email}</div>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                              {relatedPost?.title || comment.post_id}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                              {comment.content.substring(0, 120)}{comment.content.length > 120 ? '...' : ''}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                comment.approved
+                                  ? 'bg-green-100 text-green-800 dark:bg-green-900/60 dark:text-green-300'
+                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/60 dark:text-yellow-300'
+                              }`}>
+                                {comment.approved ? 'Approved' : 'Pending'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
+                              {new Date(comment.created_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4 text-sm space-x-2">
+                              <button
+                                onClick={() => toggleCommentApproved(comment.id, comment.approved)}
+                                className={`px-3 py-1 rounded text-xs font-medium transition ${
+                                  comment.approved
+                                    ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/60 dark:text-yellow-300'
+                                    : 'bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/60 dark:text-green-300'
+                                }`}
+                              >
+                                {comment.approved ? 'Unapprove' : 'Approve'}
+                              </button>
+                              <button
+                                onClick={() => deleteComment(comment.id)}
+                                className="px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/60 dark:text-red-300 rounded text-xs font-medium transition"
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
