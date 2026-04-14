@@ -1003,7 +1003,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                   : 'bg-[var(--bg-light)] text-[var(--text-primary-light)] hover:bg-[var(--accent-primary)]/10'
               }`}
             >
-              Comments ({comments.length})
+              Comment Approval ({comments.length})
             </button>
             <button
               onClick={() => setActiveTab('questions')}
@@ -1036,6 +1036,9 @@ export function AdminPage({ isActive }: AdminPageProps) {
               Gallery ({galleryPhotos.length})
             </button>
           </div>
+          <p className="text-center text-sm text-[var(--text-secondary-light)]">
+            Approve visitor comments in the <span className="font-semibold text-[var(--text-heading-light)]">Comment Approval</span> tab. Change a blog post&apos;s display date in the <span className="font-semibold text-[var(--text-heading-light)]">Post Date</span> field when creating or editing a post.
+          </p>
         </div>
 
         {loading ? (
@@ -1159,7 +1162,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           />
                         </div>
                         <div>
-                          <label className="form-label">Post Date</label>
+                          <label className="form-label">Post Date (editable)</label>
                           <input
                             type="date"
                             className="form-input"
@@ -1284,8 +1287,8 @@ export function AdminPage({ isActive }: AdminPageProps) {
             {activeTab === 'comments' && (
               <div className="bg-[var(--bg-light)] rounded-lg shadow-lg overflow-hidden">
                 <div className="p-6 border-b border-[var(--border-light)]">
-                  <h2 className="text-xl font-semibold">Comments</h2>
-                  <p className="text-sm text-secondary mt-1">Approve, unapprove, or delete blog comments</p>
+                  <h2 className="text-xl font-semibold">Comment Approval</h2>
+                  <p className="text-sm text-secondary mt-1">Approve, unapprove, or delete blog comments before they appear on the public site</p>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
