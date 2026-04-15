@@ -1541,8 +1541,14 @@ export function AdminPage({ isActive }: AdminPageProps) {
                                     : 'border-[var(--border-light)] bg-[var(--bg-light)] hover:border-[var(--accent-primary)]/40'
                                 }`}
                               >
-                                <div className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full ${option.iconBgClass}`}>
-                                  <i className={`ti ${option.iconClass} text-xl ${option.key === 'brain' ? 'text-[#333333]' : 'text-white'}`}></i>
+                                <div
+                                  className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full"
+                                  style={{ backgroundColor: option.accentColor }}
+                                >
+                                  <i
+                                    className={`ti ${option.iconClass} text-xl`}
+                                    style={{ color: option.textColor }}
+                                  ></i>
                                 </div>
                                 <div className="text-sm font-semibold text-[var(--text-heading-light)]">{option.label}</div>
                                 <div className="text-xs text-[var(--text-secondary-light)]">
@@ -1621,8 +1627,14 @@ export function AdminPage({ isActive }: AdminPageProps) {
                         return (
                         <tr key={resource.id}>
                           <td className="px-6 py-4 text-sm">
-                            <div className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${style.iconBgClass}`}>
-                              <i className={`ti ${style.iconClass} text-lg ${styleKey === 'brain' ? 'text-[#333333]' : 'text-white'}`}></i>
+                            <div
+                              className="inline-flex h-10 w-10 items-center justify-center rounded-full"
+                              style={{ backgroundColor: style.accentColor }}
+                            >
+                              <i
+                                className={`ti ${style.iconClass} text-lg`}
+                                style={{ color: style.textColor }}
+                              ></i>
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{resource.title}</td>

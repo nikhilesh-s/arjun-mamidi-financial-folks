@@ -80,8 +80,14 @@ export function ResourcesPage({ isActive }: ResourcesPageProps) {
 
                 return (
                 <div key={resource.id} className={`explore-card group animate-slide-in-up delay-${(index % 6 + 1) * 100}`}>
-                  <div className={`icon-wrapper ${style.iconBgClass} mb-4`}>
-                    <i className={`ti ${style.iconClass} text-white text-xl ${styleKey === 'brain' ? 'text-[#333333]' : ''}`}></i>
+                  <div
+                    className="icon-wrapper mb-4"
+                    style={{ backgroundColor: style.accentColor }}
+                  >
+                    <i
+                      className={`ti ${style.iconClass} text-xl`}
+                      style={{ color: style.textColor }}
+                    ></i>
                   </div>
                   <h3 className="card-title text-[var(--text-heading-light)]">{resource.title}</h3>
                   <p className="card-description text-secondary mb-6">{plainDescription}</p>
@@ -89,7 +95,8 @@ export function ResourcesPage({ isActive }: ResourcesPageProps) {
                     href={resource.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className={`inline-flex items-center justify-center w-full ${style.buttonClass} font-semibold px-4 py-2.5 rounded-full shadow-md text-sm transition duration-300 transform hover:-translate-y-1`}
+                    className="inline-flex items-center justify-center w-full font-semibold px-4 py-2.5 rounded-full shadow-md text-sm transition duration-300 transform hover:-translate-y-1 hover:brightness-110"
+                    style={{ backgroundColor: style.accentColor, color: style.textColor }}
                   >
                     <i className="ti ti-download mr-2"></i>
                     Open Resource

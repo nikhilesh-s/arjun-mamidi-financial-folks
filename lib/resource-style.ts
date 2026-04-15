@@ -5,22 +5,22 @@ export const RESOURCE_STYLE_OPTIONS = {
     key: 'classic',
     label: 'Book',
     iconClass: 'ti-book-2',
-    iconBgClass: 'bg-[var(--accent-primary)]',
-    buttonClass: 'bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)]',
+    accentColor: 'var(--accent-primary)',
+    textColor: '#ffffff',
   },
   games: {
     key: 'games',
     label: 'Video Game',
     iconClass: 'ti-device-gamepad-2',
-    iconBgClass: 'bg-sky-500',
-    buttonClass: 'bg-sky-500 hover:bg-sky-400',
+    accentColor: '#3b82f6',
+    textColor: '#ffffff',
   },
   brain: {
     key: 'brain',
     label: 'Brain',
     iconClass: 'ti-brain',
-    iconBgClass: 'bg-[var(--accent-yellow)]',
-    buttonClass: 'bg-[var(--accent-yellow)] hover:brightness-95 text-[#333333]',
+    accentColor: 'var(--accent-yellow)',
+    textColor: '#333333',
   },
 } as const;
 
