@@ -3,6 +3,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase, isSupabaseConfigured, safeSupabaseOperation, getSupabaseDiagnostics } from '@/lib/supabase';
 import { SimpleBlogEditor } from '@/components/simple-blog-editor';
+import {
+  DEFAULT_RESOURCE_STYLE,
+  parseResourceStyle,
+  RESOURCE_STYLE_OPTIONS,
+  ResourceStyleKey,
+  serializeResourceDescription,
+} from '@/lib/resource-style';
 
 interface BlogPost {
   id: string;
@@ -97,7 +104,12 @@ export function AdminPage({ isActive }: AdminPageProps) {
   const [savingPost, setSavingPost] = useState(false);
   const [showCreateResource, setShowCreateResource] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
-  const [newResource, setNewResource] = useState({ title: '', description: '', link: '' });
+  const [newResource, setNewResource] = useState({
+    title: '',
+    description: '',
+    link: '',
+    styleKey: DEFAULT_RESOURCE_STYLE as ResourceStyleKey,
+  });
   const [savingResource, setSavingResource] = useState(false);
   const [showCreatePhoto, setShowCreatePhoto] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState<GalleryPhoto | null>(null);
@@ -601,11 +613,17 @@ export function AdminPage({ isActive }: AdminPageProps) {
 
     setSavingResource(true);
     try {
+      const resourcePayload = {
+        title: newResource.title,
+        description: serializeResourceDescription(newResource.description, newResource.styleKey),
+        link: newResource.link,
+      };
+
       const result = await safeSupabaseOperation(
         async () => {
           const { error } = await supabase!
             .from('resources')
-            .insert(newResource);
+            .insert(resourcePayload);
           if (error) throw error;
           return true;
         },
@@ -614,7 +632,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
 
       if (result) {
         alert('Resource created successfully!');
-        setNewResource({ title: '', description: '', link: '' });
+        setNewResource({ title: '', description: '', link: '', styleKey: DEFAULT_RESOURCE_STYLE });
         setShowCreateResource(false);
         fetchData();
       } else {
@@ -637,11 +655,18 @@ export function AdminPage({ isActive }: AdminPageProps) {
 
     setSavingResource(true);
     try {
+      const resourcePayload = {
+        title: newResource.title,
+        description: serializeResourceDescription(newResource.description, newResource.styleKey),
+        link: newResource.link,
+        updated_at: new Date().toISOString(),
+      };
+
       const result = await safeSupabaseOperation(
         async () => {
           const { error } = await supabase!
             .from('resources')
-            .update({ ...newResource, updated_at: new Date().toISOString() })
+            .update(resourcePayload)
             .eq('id', editingResource.id);
           if (error) throw error;
           return true;
@@ -651,7 +676,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
 
       if (result) {
         alert('Resource updated successfully!');
-        setNewResource({ title: '', description: '', link: '' });
+        setNewResource({ title: '', description: '', link: '', styleKey: DEFAULT_RESOURCE_STYLE });
         setEditingResource(null);
         fetchData();
       } else {
@@ -1447,7 +1472,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                     onClick={() => {
                       setShowCreateResource(true);
                       setEditingResource(null);
-                      setNewResource({ title: '', description: '', link: '' });
+                      setNewResource({ title: '', description: '', link: '', styleKey: DEFAULT_RESOURCE_STYLE });
                     }}
                     className="inline-flex items-center bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-4 py-2 rounded-full text-sm transition duration-300"
                   >
@@ -1466,7 +1491,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                         onClick={() => {
                           setShowCreateResource(false);
                           setEditingResource(null);
-                          setNewResource({ title: '', description: '', link: '' });
+                          setNewResource({ title: '', description: '', link: '', styleKey: DEFAULT_RESOURCE_STYLE });
                         }}
                         className="text-[var(--text-secondary-light)] hover:text-[var(--text-primary-light)]"
                       >
@@ -1497,6 +1522,38 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           onChange={(e) => setNewResource({...newResource, description: e.target.value})}
                           placeholder="Detailed description of the resource"
                         />
+                      </div>
+
+                      <div>
+                        <label className="form-label">Icon Style</label>
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                          {Object.values(RESOURCE_STYLE_OPTIONS).map((option) => {
+                            const isSelected = newResource.styleKey === option.key;
+
+                            return (
+                              <button
+                                key={option.key}
+                                type="button"
+                                onClick={() => setNewResource({ ...newResource, styleKey: option.key })}
+                                className={`rounded-xl border p-4 text-left transition ${
+                                  isSelected
+                                    ? 'border-[var(--accent-primary)] bg-white shadow-sm'
+                                    : 'border-[var(--border-light)] bg-[var(--bg-light)] hover:border-[var(--accent-primary)]/40'
+                                }`}
+                              >
+                                <div className={`mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full ${option.iconBgClass}`}>
+                                  <i className={`ti ${option.iconClass} text-xl ${option.key === 'brain' ? 'text-[#333333]' : 'text-white'}`}></i>
+                                </div>
+                                <div className="text-sm font-semibold text-[var(--text-heading-light)]">{option.label}</div>
+                                <div className="text-xs text-[var(--text-secondary-light)]">
+                                  {option.key === 'classic' && 'Green book style'}
+                                  {option.key === 'games' && 'Blue video game style'}
+                                  {option.key === 'brain' && 'Yellow brain style'}
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
 
                       <div>
@@ -1534,7 +1591,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           onClick={() => {
                             setShowCreateResource(false);
                             setEditingResource(null);
-                            setNewResource({ title: '', description: '', link: '' });
+                            setNewResource({ title: '', description: '', link: '', styleKey: DEFAULT_RESOURCE_STYLE });
                           }}
                           className="px-6 py-2.5 border border-[var(--border-light)] text-[var(--text-primary-light)] rounded-lg hover:bg-[var(--bg-soft-light)] transition duration-300"
                         >
@@ -1549,6 +1606,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                   <table className="w-full">
                     <thead className="bg-[var(--bg-soft-light)]">
                       <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Style</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Title</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Description</th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary-light)] uppercase tracking-wider">Link</th>
@@ -1556,11 +1614,20 @@ export function AdminPage({ isActive }: AdminPageProps) {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--border-light)]">
-                      {resources.map((resource) => (
+                      {resources.map((resource) => {
+                        const { plainDescription, styleKey } = parseResourceStyle(resource.description);
+                        const style = RESOURCE_STYLE_OPTIONS[styleKey];
+
+                        return (
                         <tr key={resource.id}>
+                          <td className="px-6 py-4 text-sm">
+                            <div className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${style.iconBgClass}`}>
+                              <i className={`ti ${style.iconClass} text-lg ${styleKey === 'brain' ? 'text-[#333333]' : 'text-white'}`}></i>
+                            </div>
+                          </td>
                           <td className="px-6 py-4 text-sm font-medium text-[var(--text-heading-light)]">{resource.title}</td>
                           <td className="px-6 py-4 text-sm text-[var(--text-secondary-light)]">
-                            {resource.description.substring(0, 100)}{resource.description.length > 100 ? '...' : ''}
+                            {plainDescription.substring(0, 100)}{plainDescription.length > 100 ? '...' : ''}
                           </td>
                           <td className="px-6 py-4 text-sm">
                             <a href={resource.link} target="_blank" rel="noopener noreferrer" className="text-[var(--accent-primary)] hover:underline">
@@ -1570,11 +1637,13 @@ export function AdminPage({ isActive }: AdminPageProps) {
                           <td className="px-6 py-4 text-sm space-x-2">
                             <button
                               onClick={() => {
+                                const { plainDescription, styleKey } = parseResourceStyle(resource.description);
                                 setEditingResource(resource);
                                 setNewResource({
                                   title: resource.title,
-                                  description: resource.description,
-                                  link: resource.link
+                                  description: plainDescription,
+                                  link: resource.link,
+                                  styleKey,
                                 });
                               }}
                               className="px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/60 dark:text-blue-300 rounded text-xs font-medium transition"
@@ -1589,7 +1658,7 @@ export function AdminPage({ isActive }: AdminPageProps) {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </table>
                 </div>

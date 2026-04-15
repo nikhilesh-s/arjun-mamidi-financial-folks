@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase, isSupabaseConfigured, safeSupabaseOperation } from '@/lib/supabase';
 import { BOOK_URL } from '@/lib/constants';
+import { parseResourceStyle, RESOURCE_STYLE_OPTIONS } from '@/lib/resource-style';
 
 interface ResourcesPageProps {
   isActive: boolean;
@@ -73,24 +74,28 @@ export function ResourcesPage({ isActive }: ResourcesPageProps) {
             </div>
           ) : resources.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {resources.map((resource, index) => (
+              {resources.map((resource, index) => {
+                const { styleKey, plainDescription } = parseResourceStyle(resource.description);
+                const style = RESOURCE_STYLE_OPTIONS[styleKey];
+
+                return (
                 <div key={resource.id} className={`explore-card group animate-slide-in-up delay-${(index % 6 + 1) * 100}`}>
-                  <div className="icon-wrapper bg-[var(--accent-primary)] mb-4">
-                    <i className="ti ti-book-2 text-white text-xl"></i>
+                  <div className={`icon-wrapper ${style.iconBgClass} mb-4`}>
+                    <i className={`ti ${style.iconClass} text-white text-xl ${styleKey === 'brain' ? 'text-[#333333]' : ''}`}></i>
                   </div>
                   <h3 className="card-title text-[var(--text-heading-light)]">{resource.title}</h3>
-                  <p className="card-description text-secondary mb-6">{resource.description}</p>
+                  <p className="card-description text-secondary mb-6">{plainDescription}</p>
                   <a 
                     href={resource.link} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center w-full bg-[var(--accent-primary)] hover:bg-[var(--accent-primary-lighter)] text-white font-semibold px-4 py-2.5 rounded-full shadow-md text-sm transition duration-300 transform hover:-translate-y-1"
+                    className={`inline-flex items-center justify-center w-full ${style.buttonClass} font-semibold px-4 py-2.5 rounded-full shadow-md text-sm transition duration-300 transform hover:-translate-y-1`}
                   >
                     <i className="ti ti-download mr-2"></i>
                     Open Resource
                   </a>
                 </div>
-              ))}
+              )})}
             </div>
           ) : (
             <div className="text-center py-12 bg-[var(--bg-soft-light)] rounded-2xl border-2 border-dashed border-[var(--border-light)]">
