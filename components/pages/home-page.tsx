@@ -124,7 +124,7 @@ export function HomePage({ isActive }: HomePageProps) {
                 <span className="text-[var(--accent-primary)]">the Future.</span> 
               </h1>
               <p className="text-lg md:text-xl hero-subtitle text-secondary max-w-xl mb-10"> 
-                Here you'll find printable activities, and tips for teaching children how to manage money responsibly. Dive into our weekly blogs, check out our interactive resources, and start your journey toward financial confidence today!
+                Here you'll find printable activities, and tips for teaching children how to manage money responsibly. Dive into our blogs, check out our interactive resources, and start your journey toward financial confidence today!
               </p>
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in delay-100">
                 <a href="#resources" className="page-link hero-button-primary inline-flex items-center justify-center"> 
@@ -201,7 +201,7 @@ export function HomePage({ isActive }: HomePageProps) {
             <div>
               <h4 className="font-semibold mb-2">What You&apos;ll Get:</h4>
               <ul className="text-sm text-secondary space-y-2">
-                <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-yellow)] mr-2 mt-1.5 flex-shrink-0"></span>Access to weekly finance blogs and activities</li>
+                <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-yellow)] mr-2 mt-1.5 flex-shrink-0"></span>Access to finance blogs and activities</li>
                 <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-secondary)] mr-2 mt-1.5 flex-shrink-0"></span>Connect with other parents and educators</li>
                 <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-primary)] mr-2 mt-1.5 flex-shrink-0"></span>Get answers to your money questions</li>
                 <li className="flex items-start"><span className="inline-block w-2 h-2 rounded-full bg-[var(--accent-yellow)] mr-2 mt-1.5 flex-shrink-0"></span>Stay updated with new resources and tips</li>
